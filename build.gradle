@@ -6,7 +6,7 @@ plugins {
 
 group = 'be.dieterjordens'
 version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '14'
+sourceCompatibility = '15'
 
 repositories {
 	mavenCentral()
@@ -18,8 +18,11 @@ dependencies {
 	testImplementation('org.springframework.boot:spring-boot-starter-test') {
 		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
 	}
-	testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.1.0'
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.5.2'
+	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.5.2'
 	testImplementation 'io.rest-assured:spring-mock-mvc:4.3.1'
+	testImplementation 'io.rest-assured:rest-assured-all:4.3.1'
+	testImplementation 'com.sun.xml.bind:jaxb-osgi:3.0.0-M4'
 }
 
 test {
