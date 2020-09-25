@@ -1,8 +1,5 @@
 package be.dieterjordens.imagestore.image;
 
-import be.dieterjordens.imagestore.image.Image;
-import be.dieterjordens.imagestore.image.ImageController;
-import be.dieterjordens.imagestore.image.ImageRepository;
 import io.restassured.http.ContentType;
 import io.restassured.module.mockmvc.RestAssuredMockMvc;
 import org.junit.jupiter.api.BeforeEach;
@@ -68,14 +65,15 @@ public class ImageStorageIntegrationTest {
 
     @Test
     public void givenImageWhenCreateImageThenRespondWithId() throws IOException {
+        String given_id = "an id";
         String base64String = getBase64ImageFromFile();
-        System.out.println(base64String);
 
         String jsonBody = String.format("""
                    {
+                        "id": "%s",
                         "base64String" : "%s"
                    }
-                """, base64String);
+                """, given_id, base64String);
 
         String id = given()
                 .when()
