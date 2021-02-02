@@ -7,12 +7,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Base64;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -25,6 +27,9 @@ import static org.springframework.http.HttpStatus.OK;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class ImageStorageIntegrationTest {
+    @LocalServerPort
+    private int port;
+
     @Autowired
     private ImageRepository imageRepository;
 
@@ -42,6 +47,7 @@ public class ImageStorageIntegrationTest {
         String nonMatchingId = "nonMatchingImageCode";
 
         given()
+                .port(port)
                 .when()
                     .get(ImageController.PATH + nonMatchingId)
                 .then()
@@ -50,23 +56,26 @@ public class ImageStorageIntegrationTest {
 
     @Test
     public void givenExistingIdWhenGetImageThenRespondWithImage() {
-        String base64StringImage = "a base 64 image";
+        byte[] expectedImageBytes = "a base 64 image".getBytes();
+        String base64StringImage = Base64.getMimeEncoder().encodeToString(expectedImageBytes);
         Image savedImage = imageRepository.save(new Image(base64StringImage));
 
-        String base64String = given()
+        byte[] actualImageBytes = given()
+                .port(port)
                     .when()
                 .get(ImageController.PATH + savedImage.getId())
                     .then()
                     .statusCode(OK.value())
-                    .extract().body().asString();
+                    .extract().body().asByteArray();
 
-        assertThat(base64String).isEqualTo(savedImage.getBase64String());
+        assertThat(actualImageBytes).isEqualTo(expectedImageBytes);
     }
 
     @Test
-    public void givenImageWhenCreateImageThenRespondWithId() throws IOException {
+    public void givenImageWhenCreateImageThenRespondWithId() {
         String given_id = "an id";
-        String base64String = getBase64ImageFromFile();
+        byte[] expectedImageBytes = "a base 64 image".getBytes();
+        String base64String = Base64.getMimeEncoder().encodeToString(expectedImageBytes);
 
         String jsonBody = String.format("""
                    {
@@ -76,10 +85,11 @@ public class ImageStorageIntegrationTest {
                 """, given_id, base64String);
 
         String id = given()
+                .port(port)
                 .when()
                     .contentType(ContentType.JSON)
                     .body(jsonBody)
-                    .post(ImageController.PATH)
+                    .put(ImageController.PATH)
                 .then()
                     .statusCode(OK.value())
                     .extract().body().asString();
@@ -87,11 +97,5 @@ public class ImageStorageIntegrationTest {
         Optional<Image> image = imageRepository.findById(id);
         assertThat(image).isPresent();
         assertThat(image.get().getId()).isEqualTo(id);
-    }
-
-    private String getBase64ImageFromFile() throws IOException {
-        ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(Objects.requireNonNull(classLoader.getResource("base64image.txt")).getFile());
-        return Files.readString(file.toPath()).replace("\n", "");
     }
 }
