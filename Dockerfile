@@ -1,13 +1,14 @@
-FROM gradle:jdk15
+FROM gradle:jdk15 AS build
 
-RUN addgroup -S spring && adduser -S spring -G spring
-USER spring:spring
-WORKDIR /home/spring
+COPY --chown=gradle:gradle . /home/gradle/app
+WORKDIR /home/gradle/app
+RUN gradle build --no-daemon
 
-RUN gradle clean build -x test
-
-COPY /build/libs/*.jar application.jar
-
+FROM openjdk:15-jdk
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "application.jar"]
+RUN mkdir /app
+
+COPY --from=build /home/gradle/app/build/libs/*.jar /app/spring-boot-application.jar
+
+ENTRYPOINT ["java", "-XX:+UnlockExperimentalVMOptions", "-XX:+UseCGroupMemoryLimitForHeap", "-Djava.security.egd=file:/dev/./urandom","-jar","/app/spring-boot-application.jar"]
