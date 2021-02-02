@@ -24,7 +24,6 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                        sh './gradlew clean build -x test'
                         // configure registry
                         docker.withRegistry('https://082272919318.dkr.ecr.eu-west-3.amazonaws.com', 'ecr:eu-west-3:aws.dieter.jordens') {
                         def myImage = docker.build('dj-website-image-store')
